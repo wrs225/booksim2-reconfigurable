@@ -79,6 +79,12 @@ clean:
 	rm -f $(OBJS)
 	rm -f $(PROG)
 
+just_fattree: #remove fattree and the top level file and rebuild
+	rm -f networks/fattree.o
+	rm -f booksim
+	make
+
+
 distclean: clean
 	rm -f *~ */*~
 	rm -f *.o */*.o
