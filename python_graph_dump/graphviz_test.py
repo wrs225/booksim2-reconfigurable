@@ -19,17 +19,22 @@ def read_file(file_name):
 def create_graph(table):
     # Create a new graph
     G = gv.Digraph()
+    G.attr(rankdir="TB", ranksep="equally", nodesep="equally")
 
     print(table)
+
     # Add the nodes to the graph
     for row in table[1:]:
         print(row[0])
-        G.node(row[0])
+        G.node(
+            row[0], fontsize="30"
+        )  # Increase the fontsize to make the node label larger
 
-    # Add the edges to the graph\
+    # Add the edges to the graph
     for row in table:
         print(row[0])
-        G.edge(row[0], row[2])
+        edge_label = f"{row[1]} -> {row[3]}"  # Create a label with the port numbers
+        G.edge(row[0], row[2], label=edge_label)  # Add the label to the edge
 
     return G
 
@@ -46,6 +51,7 @@ def main():
         print("File not found: " + file_name)
         sys.exit(1)
     table = read_file(file_name)
+    file_name = "render.txt"
     G = create_graph(table)
     G.render(file_name, view=True)
 

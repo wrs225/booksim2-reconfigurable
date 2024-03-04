@@ -81,6 +81,8 @@ clean:
 
 just_fattree: #remove fattree and the top level file and rebuild
 	rm -f networks/fattree.o
+	rm -f routers/iq_router.o
+	rm -f routefunc.o
 	rm -f booksim
 	make
 
