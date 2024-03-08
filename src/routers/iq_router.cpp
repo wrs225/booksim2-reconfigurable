@@ -249,7 +249,7 @@ void IQRouter::_InternalStep()
   {
     return;
   }
-  cout << "Input Queuing" << endl;
+
   _InputQueuing();
   bool activity = !_proc_credits.empty();
 
@@ -641,10 +641,6 @@ void IQRouter::_VCAllocEvaluate()
 
     Flit const *const f = cur_buf->FrontFlit(vc);
     // cout f->vc and vc
-    cout << "f->vc: " << f->vc << " vc: " << vc << endl;
-    cout << "router_id: " << this->GetID() << endl;
-    cout << "Flit dest: " << f->dest << " Flit src: " << f->src << endl;
-    cout << "Flit ID:" << f->id << endl;
 
     assert(f);
     assert(f->vc == vc);
@@ -1523,8 +1519,6 @@ void IQRouter::_SWAllocEvaluate()
 
     Flit const *const f = cur_buf->FrontFlit(vc);
     assert(f);
-    cout << "SWAllocEvaluate: " << f->id << " " << f->watch << endl;
-    cout << "vc: " << vc << " input: " << input << " output: " << cur_buf->GetOutputPort(vc) << " state: " << cur_buf->GetState(vc) << endl;
     assert(f->vc == vc);
 
     if (f->watch)

@@ -57,7 +57,7 @@ sample_period  = 10000;
 
 
 
-routing_function = nca;
+routing_function = rffattree_all_test;
 num_vcs     = 4;
 
 priority = none;

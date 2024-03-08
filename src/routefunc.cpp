@@ -318,8 +318,6 @@ void fattree_nca(const Router *r, const Flit *f,
 
   int out_port;
 
-  cout << "here2" << endl;
-
   if (inject)
   {
 
@@ -358,8 +356,7 @@ void fattree_nca(const Router *r, const Flit *f,
     else
     {
       // up ports are numbered last
-      cout << in_channel << endl;
-      cout << gK << endl;
+
       assert((in_channel < gK) | ((in_channel >= gK * 2) && (in_channel < 3 * gK))); // came from a up channel
       out_port = gK + RandomInt(gK - 1);
     }
@@ -489,9 +486,10 @@ void rffattree_random_all_channel_test(const Router *r, const Flit *f,
 
   int out_port;
 
+  cout << inject << endl;
   if (inject)
   {
-    cout << "injecting packet" << endl;
+
     out_port = -1;
   }
   else
@@ -506,6 +504,9 @@ void rffattree_random_all_channel_test(const Router *r, const Flit *f,
     int router_neighborhood = pos / routers_per_neighborhood; // coverage of this tree
     int router_coverage = powi(gK, gN - router_depth);        // span of the tree from this router
 
+    cout << dest << endl;
+    cout << pos << endl;
+    cout << router_depth << endl;
     // NCA reached going down
     if (dest < (router_neighborhood + 1) * router_coverage &&
         dest >= router_neighborhood * router_coverage)
@@ -515,20 +516,20 @@ void rffattree_random_all_channel_test(const Router *r, const Flit *f,
       // ejection
       if (router_depth == gN - 1)
       {
-        out_port = 2 * (dest % gK);
+        out_port = (dest % gK) + 2 * gK * RandomInt(1);
       }
       else
       {
         // find the down port for the destination
         int router_branch_coverage = powi(gK, gN - (router_depth + 1));
-        out_port = 2 * (dest - router_neighborhood * router_coverage) / router_branch_coverage;
+        out_port = (dest - router_neighborhood * router_coverage) / router_branch_coverage + 2 * gK * RandomInt(1);
       }
     }
     else
     {
       // up ports are numbered last
-      assert(in_channel < 2 * gK); // came from a up channel
-      out_port = 2 * gK + 2 * RandomInt(gK - 1);
+      assert((in_channel < gK) | ((in_channel >= gK * 2) && (in_channel < 3 * gK))); // came from a up channel
+      out_port = gK + RandomInt(gK - 1) + 2 * gK * RandomInt(1);
     }
   }
   outputs->Clear();

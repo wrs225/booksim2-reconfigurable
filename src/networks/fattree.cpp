@@ -51,7 +51,7 @@
 #include "fattree.hpp"
 #include "misc_utils.hpp"
 
-#define FATTREE_DEBUG 1
+// #define FATTREE_DEBUG 1
 
 FatTree::FatTree(const Configuration &config, const string &name)
     : Network(config, name)
@@ -303,8 +303,6 @@ void FatTree::_BuildNet(const Configuration &config)
         for (port = 0; port < _k; ++port)
         {
           int link = _channels / 2 + (level * chan_per_level) + pos * _k + port;
-          cout << "link# " << link << endl;
-          cout << "_chanlen" << _chan.size() << endl;
           _Router(level, pos)->AddOutputChannel(_chan[link], _chan_cred[link]);
           _chan[link]->SetLatency(1);
           _chan_cred[link]->SetLatency(1);
