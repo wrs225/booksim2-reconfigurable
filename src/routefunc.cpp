@@ -56,13 +56,16 @@ map<string, tRoutingFunction> gRoutingFunctionMap;
 
 int gNumVCs;
 
+int fatTreeBwDiv;
+
 /* Add more functions here
  *
  */
 
 // ============================================================
 //  Balfour-Schultz
-int gReadReqBeginVC, gReadReqEndVC;
+int gReadReqBeginVC,
+    gReadReqEndVC;
 int gWriteReqBeginVC, gWriteReqEndVC;
 int gReadReplyBeginVC, gReadReplyEndVC;
 int gWriteReplyBeginVC, gWriteReplyEndVC;
@@ -356,9 +359,14 @@ void fattree_nca(const Router *r, const Flit *f,
     else
     {
       // up ports are numbered last
+      assert(in_channel < gK); // came from a up channel
+      //
+      out_port = gK + (RandomInt(gK - 1));
 
-      assert((in_channel < gK) | ((in_channel >= gK * 2) && (in_channel < 3 * gK))); // came from a up channel
-      out_port = gK + RandomInt(gK - 1);
+      if (router_depth == 1)
+      {
+        out_port = gK + (RandomInt(gK - 1) / fatTreeBwDiv);
+      }
     }
   }
   outputs->Clear();
@@ -436,10 +444,24 @@ void fattree_anca(const Router *r, const Flit *f,
     else
     {
       // up ports are numbered last
+
       assert(in_channel < gK); // came from a up channel
       out_port = gK;
-      int random1 = RandomInt(gK - 1); // Chose two ports out of the possible at random, compare loads, choose one.
-      int random2 = RandomInt(gK - 1);
+
+      int random1; // Chose two ports out of the possible at random, compare loads, choose one.
+      int random2;
+
+      if (router_depth == 1)
+      {
+        random1 = RandomInt(gK - 1) / fatTreeBwDiv;
+        random2 = RandomInt(gK - 1) / fatTreeBwDiv;
+      }
+      else
+      {
+        random1 = RandomInt(gK - 1);
+        random2 = RandomInt(gK - 1);
+      }
+
       if (r->GetUsedCredit(out_port + random1) > r->GetUsedCredit(out_port + random2))
       {
         out_port = out_port + random2;
@@ -448,88 +470,6 @@ void fattree_anca(const Router *r, const Flit *f,
       {
         out_port = out_port + random1;
       }
-    }
-  }
-  outputs->Clear();
-
-  outputs->AddRange(out_port, vcBegin, vcEnd);
-}
-
-// ============================================================
-//  RFATTREE: Reconfigurable Fat Tree Nearest Common Ancestor w/ Random  Routing Up | All extra channels enabled
-// ===
-void rffattree_random_all_channel_test(const Router *r, const Flit *f,
-                                       int in_channel, OutputSet *outputs, bool inject)
-{
-  int vcBegin = 0, vcEnd = gNumVCs - 1;
-  if (f->type == Flit::READ_REQUEST)
-  {
-    vcBegin = gReadReqBeginVC;
-    vcEnd = gReadReqEndVC;
-  }
-  else if (f->type == Flit::WRITE_REQUEST)
-  {
-    vcBegin = gWriteReqBeginVC;
-    vcEnd = gWriteReqEndVC;
-  }
-  else if (f->type == Flit::READ_REPLY)
-  {
-    vcBegin = gReadReplyBeginVC;
-    vcEnd = gReadReplyEndVC;
-  }
-  else if (f->type == Flit::WRITE_REPLY)
-  {
-    vcBegin = gWriteReplyBeginVC;
-    vcEnd = gWriteReplyEndVC;
-  }
-  assert(((f->vc >= vcBegin) && (f->vc <= vcEnd)) || (inject && (f->vc < 0)));
-
-  int out_port;
-
-  cout << inject << endl;
-  if (inject)
-  {
-
-    out_port = -1;
-  }
-  else
-  {
-
-    int dest = f->dest;
-    int router_id = r->GetID(); // routers are numbered with smallest at the top level
-    int routers_per_level = powi(gK, gN - 1);
-    int pos = router_id % routers_per_level;
-    int router_depth = router_id / routers_per_level; // which level
-    int routers_per_neighborhood = powi(gK, gN - router_depth - 1);
-    int router_neighborhood = pos / routers_per_neighborhood; // coverage of this tree
-    int router_coverage = powi(gK, gN - router_depth);        // span of the tree from this router
-
-    cout << dest << endl;
-    cout << pos << endl;
-    cout << router_depth << endl;
-    // NCA reached going down
-    if (dest < (router_neighborhood + 1) * router_coverage &&
-        dest >= router_neighborhood * router_coverage)
-    {
-      // down ports are numbered first
-
-      // ejection
-      if (router_depth == gN - 1)
-      {
-        out_port = (dest % gK) + 2 * gK * RandomInt(1);
-      }
-      else
-      {
-        // find the down port for the destination
-        int router_branch_coverage = powi(gK, gN - (router_depth + 1));
-        out_port = (dest - router_neighborhood * router_coverage) / router_branch_coverage + 2 * gK * RandomInt(1);
-      }
-    }
-    else
-    {
-      // up ports are numbered last
-      assert((in_channel < gK) | ((in_channel >= gK * 2) && (in_channel < 3 * gK))); // came from a up channel
-      out_port = gK + RandomInt(gK - 1) + 2 * gK * RandomInt(1);
     }
   }
   outputs->Clear();
@@ -757,6 +697,100 @@ int dor_next_mesh(int cur, int dest, bool descending)
 }
 
 //=============================================================
+
+void dor_next_torus_reconfig_all(int cur, int dest, int in_port,
+                                 int *out_port, int *partition,
+                                 bool balance = false)
+{
+  int dim_left;
+  int dir;
+  int dist2;
+
+  for (dim_left = 0; dim_left < gN; ++dim_left)
+  {
+    if ((cur % gK) != (dest % gK))
+    {
+      break;
+    }
+    cur /= gK;
+    dest /= gK;
+  }
+
+  if (dim_left < gN)
+  {
+
+    if ((in_port / 2) != dim_left)
+    {
+      // Turning into a new dimension
+
+      cur %= gK;
+      dest %= gK;
+      dist2 = gK - 2 * ((dest - cur + gK) % gK);
+
+      if ((dist2 > 0) ||
+          ((dist2 == 0) && (RandomInt(1))))
+      {
+        *out_port = 2 * dim_left + (2 * gN + 1) * RandomInt(1); // Right
+        dir = 0;
+      }
+      else
+      {
+        *out_port = 2 * dim_left + 1 + (2 * gN + 1) * RandomInt(1); // Left
+        dir = 1;
+      }
+
+      if (partition)
+      {
+        if (balance)
+        {
+          // Cray's "Partition" allocation
+          // Two datelines: one between k-1 and 0 which forces VC 1
+          //                another between ((k-1)/2) and ((k-1)/2 + 1) which
+          //                forces VC 0 otherwise any VC can be used
+
+          if (((dir == 0) && (cur > dest)) ||
+              ((dir == 1) && (cur < dest)))
+          {
+            *partition = 1;
+          }
+          else if (((dir == 0) && (cur <= (gK - 1) / 2) && (dest > (gK - 1) / 2)) ||
+                   ((dir == 1) && (cur > (gK - 1) / 2) && (dest <= (gK - 1) / 2)))
+          {
+            *partition = 0;
+          }
+          else
+          {
+            *partition = RandomInt(1); // use either VC set
+          }
+        }
+        else
+        {
+          // Deterministic, fixed dateline between nodes k-1 and 0
+
+          if (((dir == 0) && (cur > dest)) ||
+              ((dir == 1) && (dest < cur)))
+          {
+            *partition = 1;
+          }
+          else
+          {
+            *partition = 0;
+          }
+        }
+      }
+    }
+    else
+    {
+      // Inverting the least significant bit keeps
+      // the packet moving in the same direction
+      *out_port = in_port ^ 1 + (2 * gN + 1) * RandomInt(1);
+    }
+  }
+  else
+  {
+    *out_port = 2 * gN; // Eject
+  }
+}
 
 void dor_next_torus(int cur, int dest, int in_port,
                     int *out_port, int *partition,
@@ -1990,6 +2024,85 @@ void dim_order_torus(const Router *r, const Flit *f, int in_channel,
   outputs->AddRange(out_port, vcBegin, vcEnd);
 }
 
+// Dimension order for reconfigurable torii.
+void dim_order_reconfig_all_torus(const Router *r, const Flit *f, int in_channel,
+                                  OutputSet *outputs, bool inject)
+{
+  int vcBegin = 0, vcEnd = gNumVCs - 1;
+  if (f->type == Flit::READ_REQUEST)
+  {
+    vcBegin = gReadReqBeginVC;
+    vcEnd = gReadReqEndVC;
+  }
+  else if (f->type == Flit::WRITE_REQUEST)
+  {
+    vcBegin = gWriteReqBeginVC;
+    vcEnd = gWriteReqEndVC;
+  }
+  else if (f->type == Flit::READ_REPLY)
+  {
+    vcBegin = gReadReplyBeginVC;
+    vcEnd = gReadReplyEndVC;
+  }
+  else if (f->type == Flit::WRITE_REPLY)
+  {
+    vcBegin = gWriteReplyBeginVC;
+    vcEnd = gWriteReplyEndVC;
+  }
+  assert(((f->vc >= vcBegin) && (f->vc <= vcEnd)) || (inject && (f->vc < 0)));
+
+  int out_port;
+
+  if (inject)
+  {
+
+    out_port = -1;
+  }
+  else
+  {
+
+    int cur = r->GetID();
+    int dest = f->dest;
+
+    dor_next_torus_reconfig_all(cur, dest, in_channel,
+                                &out_port, &f->ph, false);
+
+    // at the destination router, we don't need to separate VCs by ring partition
+    if (cur != dest)
+    {
+
+      int const available_vcs = (vcEnd - vcBegin + 1) / 2;
+      assert(available_vcs > 0);
+
+      if (f->ph == 0)
+      {
+        vcEnd -= available_vcs;
+      }
+      else
+      {
+        vcBegin += available_vcs;
+      }
+    }
+
+    if (f->watch)
+    {
+      *gWatchOut << GetSimTime() << " | " << r->FullName() << " | "
+                 << "Adding VC range ["
+                 << vcBegin << ","
+                 << vcEnd << "]"
+                 << " at output port " << out_port
+                 << " for flit " << f->id
+                 << " (input port " << in_channel
+                 << ", destination " << f->dest << ")"
+                 << "." << endl;
+    }
+  }
+
+  outputs->Clear();
+
+  outputs->AddRange(out_port, vcBegin, vcEnd);
+}
+
 //=============================================================
 
 void dim_order_ni_torus(const Router *r, const Flit *f, int in_channel,
@@ -2443,6 +2556,11 @@ void InitializeRoutingMap(const Configuration &config)
     gWriteReplyEndVC = gNumVCs - 1;
   }
 
+  fatTreeBwDiv = config.GetInt("fat_tree_bw_div");
+  if (fatTreeBwDiv < 0)
+  {
+    fatTreeBwDiv = 1;
+  }
   /* Register routing functions here */
 
   // ===================================================
@@ -2455,8 +2573,6 @@ void InitializeRoutingMap(const Configuration &config)
   gRoutingFunctionMap["dor_mesh"] = &dim_order_mesh;
   gRoutingFunctionMap["xy_yx_mesh"] = &xy_yx_mesh;
   gRoutingFunctionMap["adaptive_xy_yx_mesh"] = &adaptive_xy_yx_mesh;
-
-  gRoutingFunctionMap["rffattree_all_test_fattree"] = &rffattree_random_all_channel_test;
   // End Balfour-Schultz
   // ===================================================
 
@@ -2466,6 +2582,7 @@ void InitializeRoutingMap(const Configuration &config)
   gRoutingFunctionMap["dim_order_torus"] = &dim_order_torus;
   gRoutingFunctionMap["dim_order_ni_torus"] = &dim_order_ni_torus;
   gRoutingFunctionMap["dim_order_bal_torus"] = &dim_order_bal_torus;
+  gRoutingFunctionMap["dim_order_reconfig_all_torus"] = &dim_order_reconfig_all_torus;
 
   gRoutingFunctionMap["romm_mesh"] = &romm_mesh;
   gRoutingFunctionMap["romm_ni_mesh"] = &romm_ni_mesh;
