@@ -49,6 +49,10 @@ FlitChannel::FlitChannel(Module * parent, string const & name, int classes)
 : Channel<Flit>(parent, name), _routerSource(NULL), _routerSourcePort(-1), 
   _routerSink(NULL), _routerSinkPort(-1), _idle(0) {
   _active.resize(classes, 0);
+
+  // added for reconfigurability
+  reconfig_in_use = false;
+  reconfig_channel = nullptr;
 }
 
 void FlitChannel::SetSource(Router const * const router, int port) {

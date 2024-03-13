@@ -288,3 +288,60 @@ void Network::DumpNodeMap( ostream & os, string const & prefix ) const
        << _eject[s]->GetSource()->GetID() << ','
        << _inject[s]->GetSink()->GetID() << endl;
 }
+
+// added for reconfigurability
+void Network::reconfigure() {
+
+  // create vector for reconfig info
+  vector<reconfig_info> costs;
+
+  // clear the current reconfigurable channels if necessary
+  if (!reconfig_channels.empty()) {
+    for (FlitChannel* f : reconfig_channels) {
+      f->get_reconfig_channel()->set_rc_in_use(false);
+    }
+    reconfig_channels.clear();
+  }
+
+  // iterate over all default channels and calculate their costs
+  int num_default_channels = _channels / 2;
+
+  for (int i = 0; i < num_default_channels; i++) {
+
+    FlitChannel* chan = _chan[i];
+    FlitChannel* rc_chan = chan->get_reconfig_channel();
+
+    const Router* src = chan->GetSource();
+    int srcPort = chan->GetSourcePort();
+
+    const Router* dst = chan->GetSink();
+    int dstPort = chan->GetSinkPort();
+
+    int cost = src->GetUsedCredit(srcPort) + dst->GetBufferOccupancy(dstPort);
+
+    // if reconfig channel is active, account for its trafic in the cost
+    if (chan->get_rc_in_use()) {
+
+      const Router* rc_src = rc_chan->GetSource();
+      int rc_srcPort = rc_chan->GetSourcePort();
+
+      const Router* rc_dst = rc_chan->GetSink();
+      int rc_dstPort = rc_chan->GetSinkPort();
+
+      cost += rc_src->GetUsedCredit(rc_srcPort) + rc_dst->GetBufferOccupancy(rc_dstPort);
+    }
+
+    // add info to cost vector
+    reconfig_info curr_cost_info(cost, rc_chan);
+    costs.push_back(curr_cost_info);
+  }
+
+  // sort the cost info vector from highest to lowest cost
+  std::sort(costs.begin(), costs.end(), [](const reconfig_info& a, const reconfig_info& b) {return a.cost > b.cost;});
+
+  // re-populate network reconfig channel vector
+  for (int i = 0; i < num_reconfig_channels; i++) {
+    reconfig_channels.push_back(costs.at(i).fc);
+    reconfig_channels.at(i)->get_reconfig_channel()->set_rc_in_use(true);
+  } 
+}

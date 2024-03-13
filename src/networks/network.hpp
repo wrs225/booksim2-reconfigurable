@@ -30,6 +30,7 @@
 
 #include <vector>
 #include <deque>
+#include <algorithm>
 
 #include "module.hpp"
 #include "flit.hpp"
@@ -70,6 +71,18 @@ protected:
   virtual void _BuildNet( const Configuration &config ) = 0;
 
   void _Alloc( );
+
+  // added for reconfigurability project
+  struct reconfig_info {
+    int cost;
+    FlitChannel* fc;
+
+    reconfig_info(int c, FlitChannel* chan) : cost(c), fc(chan) {}
+  };
+
+  int num_reconfig_channels;
+  vector<FlitChannel *> reconfig_channels;
+  
 
 public:
   Network( const Configuration &config, const string & name );
@@ -112,6 +125,11 @@ public:
   const vector<Router *> & GetRouters(){return _routers;}
   Router * GetRouter(int index) {return _routers[index];}
   int NumRouters() const {return _size;}
+
+  // added for reconfigurability oroject
+  void reconfigure();
+  inline int get_num_reconfig_channels() {return num_reconfig_channels;}
+  inline void set_num_reconfig_channels(int N) {num_reconfig_channels = N;}
 };
 
 #endif 

@@ -220,13 +220,12 @@ void KNCube::_BuildNet(const Configuration &config)
         // add the input channel
         _routers[node]->AddInputChannel(_chan[right_input + _channels / 2], _chan_cred[right_input + _channels / 2]);
         _routers[node]->AddInputChannel(_chan[left_input + _channels / 2], _chan_cred[left_input + _channels / 2]);
-        _chan[right_input + _channels / 2]->reconfig_channel = _chan[right_input];
-        _chan[left_input + _channels / 2]->reconfig_channel = _chan[left_input];
 
-        _chan[right_input]->reconfig_channel = _chan[right_input + _channels / 2];
-        _chan[left_input]->reconfig_channel = _chan[left_input + _channels / 2];
-        _chan[right_input + _channels / 2].is_reconfig = true;
-        _chan[left_input + _channels / 2].is_reconfig = true;
+        _chan[right_input + _channels / 2]->set_reconfig_channel(_chan[right_input]);
+        _chan[left_input + _channels / 2]->set_reconfig_channel(_chan[left_input]);
+
+        _chan[right_input]->set_reconfig_channel(_chan[right_input + _channels / 2]);
+        _chan[left_input]->set_reconfig_channel(_chan[left_input + _channels / 2]);
 
         // set input channel latency
         if (use_noc_latency)
@@ -250,12 +249,12 @@ void KNCube::_BuildNet(const Configuration &config)
         // add the output channel
         _routers[node]->AddOutputChannel(_chan[right_output + _channels / 2], _chan_cred[right_output + _channels / 2]);
         _routers[node]->AddOutputChannel(_chan[left_output + _channels / 2], _chan_cred[left_output + _channels / 2]);
-        _chan[right_output + _channels / 2]->reconfig_channel = _chan[right_output];
-        _chan[left_output + _channels / 2]->reconfig_channel = _chan[left_output];
-        _chan[right_output]->reconfig_channel = _chan[right_output + _channels / 2];
-        _chan[left_output]->reconfig_channel = _chan[left_output + _channels / 2];
-        _chan[right_output + _channels / 2].is_reconfig = true;
-        _chan[left_output + _channels / 2].is_reconfig = true;
+
+        _chan[right_output + _channels / 2]->set_reconfig_channel(_chan[right_output]);
+        _chan[left_output + _channels / 2]->set_reconfig_channel(_chan[left_output]);
+
+        _chan[right_output]->set_reconfig_channel(_chan[right_output + _channels / 2]);
+        _chan[left_output]->set_reconfig_channel(_chan[left_output + _channels / 2]);
 
         // set output channel latency
         if (use_noc_latency)
@@ -276,6 +275,10 @@ void KNCube::_BuildNet(const Configuration &config)
       // injection and ejection channel, always 1 latency
     }
   }
+
+  // added for reconfigurability
+  set_num_reconfig_channels(_channels / 4);
+
   cout << "HEREHEREHERE" << endl;
   this->DumpChannelMap(cout, "");
 }

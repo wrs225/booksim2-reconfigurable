@@ -67,10 +67,6 @@ public:
   virtual void Evaluate() {}
   virtual void WriteOutputs();
 
-  bool reconfig_in_use;
-  bool is_reconfig;
-  Channel *reconfig_channel;
-
 protected:
   int _delay;
   T *_input;
@@ -80,12 +76,7 @@ protected:
 
 template <typename T>
 Channel<T>::Channel(Module *parent, string const &name)
-    : TimedModule(parent, name), _delay(1), _input(0), _output(0)
-{
-  reconfig_in_use = false;
-  is_reconfig = false;
-  reconfig_channel = NULL;
-}
+    : TimedModule(parent, name), _delay(1), _input(0), _output(0) {}
 
 template <typename T>
 void Channel<T>::SetLatency(int cycles)

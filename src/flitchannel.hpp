@@ -78,6 +78,21 @@ public:
   virtual void ReadInputs();
   virtual void WriteOutputs();
 
+  // added for reconfigurability
+  inline void set_reconfig_channel(FlitChannel* r) {
+    reconfig_channel = r;
+  }
+  inline FlitChannel* get_reconfig_channel() {
+    return reconfig_channel;
+  }
+
+  inline void set_rc_in_use(bool x) {
+    reconfig_in_use = x;
+  }
+  inline bool get_rc_in_use() {
+    return reconfig_in_use;
+  }
+
 private:
   
   ////////////////////////////////////////
@@ -94,6 +109,10 @@ private:
   // Statistics for Activity Factors
   vector<int> _active;
   int _idle;
+
+  // added for reconfigurability
+  bool reconfig_in_use;
+  FlitChannel* reconfig_channel;
 };
 
 #endif
