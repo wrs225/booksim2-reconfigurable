@@ -220,6 +220,8 @@ void KNCube::_BuildNet(const Configuration &config)
         // add the input channel
         _routers[node]->AddInputChannel(_chan[right_input + _channels / 2], _chan_cred[right_input + _channels / 2]);
         _routers[node]->AddInputChannel(_chan[left_input + _channels / 2], _chan_cred[left_input + _channels / 2]);
+        _chan[right_input + _channels / 2]->reconfig_channel = _chan[right_input];
+        _chan[left_input + _channels / 2]->reconfig_channel = _chan[left_input];
 
         // set input channel latency
         if (use_noc_latency)
@@ -243,6 +245,8 @@ void KNCube::_BuildNet(const Configuration &config)
         // add the output channel
         _routers[node]->AddOutputChannel(_chan[right_output + _channels / 2], _chan_cred[right_output + _channels / 2]);
         _routers[node]->AddOutputChannel(_chan[left_output + _channels / 2], _chan_cred[left_output + _channels / 2]);
+        _chan[right_input + _channels / 2]->reconfig_channel = _chan[right_input];
+        _chan[left_input + _channels / 2]->reconfig_channel = _chan[left_input];
 
         // set output channel latency
         if (use_noc_latency)
