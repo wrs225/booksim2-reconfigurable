@@ -263,6 +263,8 @@ void KNCube::_BuildNet(const Configuration &config)
       // injection and ejection channel, always 1 latency
     }
   }
+  cout << "HEREHEREHERE" << endl;
+  this->DumpChannelMap(cout, "");
 }
 
 int KNCube::_LeftChannel(int node, int dim)

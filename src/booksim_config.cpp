@@ -314,6 +314,10 @@ BookSimConfig::BookSimConfig()
   //==================Reconfigurability======================
   _int_map["reconfig"] = 0;
   AddStrField("reconfig", ""); // workaround to allow for vector specification
+
+  // fat_tree_bw_div
+  _int_map["fat_tree_bw_div"] = 1;
+  AddStrField("fat_tree_bw_div", ""); // workaround to allow for vector specification
 }
 
 PowerConfig::PowerConfig()

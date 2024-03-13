@@ -1022,10 +1022,7 @@ void TrafficManager::_GeneratePacket(int source, int stype,
         f->id = _cur_id++;
         assert(_cur_id);
         f->pid = pid;
-        if (f->id == 40)
-            f->watch = true;
-        else
-            f->watch = watch | (gWatchOut && (_flits_to_watch.count(f->id) > 0));
+        f->watch = watch | (gWatchOut && (_flits_to_watch.count(f->id) > 0));
         f->subnetwork = subnetwork;
         f->src = source;
         f->ctime = time;

@@ -730,12 +730,15 @@ void dor_next_torus_reconfig_all(int cur, int dest, int in_port,
       if ((dist2 > 0) ||
           ((dist2 == 0) && (RandomInt(1))))
       {
-        *out_port = 2 * dim_left + (2 * gN + 1) * RandomInt(1); // Right
+        int channel_sel = (2 * gN + 1) * RandomInt(1);
+
+        *out_port = 2 * dim_left + channel_sel; // Right
         dir = 0;
       }
       else
       {
-        *out_port = 2 * dim_left + 1 + (2 * gN + 1) * RandomInt(1); // Left
+        int channel_sel = (2 * gN + 1) * RandomInt(1);
+        *out_port = 2 * dim_left + 1 + channel_sel; // Left
         dir = 1;
       }
 
@@ -783,7 +786,7 @@ void dor_next_torus_reconfig_all(int cur, int dest, int in_port,
     {
       // Inverting the least significant bit keeps
       // the packet moving in the same direction
-      *out_port = in_port ^ 1 + (2 * gN + 1) * RandomInt(1);
+      *out_port = (in_port ^ 1) + ((2 * gN + 1) * RandomInt(1));
     }
   }
   else
