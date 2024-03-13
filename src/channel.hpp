@@ -82,6 +82,9 @@ template <typename T>
 Channel<T>::Channel(Module *parent, string const &name)
     : TimedModule(parent, name), _delay(1), _input(0), _output(0)
 {
+  reconfig_in_use = false;
+  is_reconfig = false;
+  reconfig_channel = NULL;
 }
 
 template <typename T>
