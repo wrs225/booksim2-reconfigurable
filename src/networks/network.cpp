@@ -346,7 +346,7 @@ void Network::reconfigure() {
   for (int i = 0; i < num_reconfig_channels; i++) {
     reconfig_channels.push_back(costs.at(i).fc);
     reconfig_channels.at(i)->get_reconfig_channel()->set_rc_in_use(true);
-    printf("\nRC Channel %d is placed between router %d and %d", i, reconfig_channels.at(i)->GetSource()->GetID(), reconfig_channels.at(i)->GetSink()->GetID());
+    printf("\nRC Channel %d is placed between router %d and %d. Cost = %d", i, reconfig_channels.at(i)->GetSource()->GetID(), reconfig_channels.at(i)->GetSink()->GetID(), costs.at(i).cost);
   } 
 
 printf("\nThere are %d reconfig channels\n\n", reconfig_channels.size());
