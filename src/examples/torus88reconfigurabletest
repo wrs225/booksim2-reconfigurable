@@ -38,5 +38,5 @@ routing_function = dim_order_reconfig_all;
 // Flow control
 num_vcs = 2;
 // Traffic
-traffic = uniform;
-injection_rate = 0.4;
+traffic = bitcomp;
+injection_rate = 0.15;

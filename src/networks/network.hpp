@@ -128,8 +128,11 @@ public:
 
   // added for reconfigurability oroject
   void reconfigure();
+
   inline int get_num_reconfig_channels() {return num_reconfig_channels;}
   inline void set_num_reconfig_channels(int N) {num_reconfig_channels = N;}
+
+  inline vector<FlitChannel*> get_reconfig_channels() {return reconfig_channels;}
 };
 
 #endif 

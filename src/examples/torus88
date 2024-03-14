@@ -36,5 +36,5 @@ routing_function = dim_order;
 // Flow control
 num_vcs = 2;
 // Traffic
-traffic = uniform;
+traffic = bitcomp;
 injection_rate = 0.15;

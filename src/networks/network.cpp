@@ -339,9 +339,15 @@ void Network::reconfigure() {
   // sort the cost info vector from highest to lowest cost
   std::sort(costs.begin(), costs.end(), [](const reconfig_info& a, const reconfig_info& b) {return a.cost > b.cost;});
 
+  // printf("\nCosts has size: %d", costs.size());
+  // printf("\nLoop Iterations: %d", num_reconfig_channels);
+
   // re-populate network reconfig channel vector
   for (int i = 0; i < num_reconfig_channels; i++) {
     reconfig_channels.push_back(costs.at(i).fc);
     reconfig_channels.at(i)->get_reconfig_channel()->set_rc_in_use(true);
+    printf("\nRC Channel %d is placed between router %d and %d", i, reconfig_channels.at(i)->GetSource()->GetID(), reconfig_channels.at(i)->GetSink()->GetID());
   } 
+
+printf("\nThere are %d reconfig channels\n\n", reconfig_channels.size());
 }
