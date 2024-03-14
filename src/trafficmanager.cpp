@@ -1803,6 +1803,9 @@ bool TrafficManager::_SingleSim()
                      << "Time used is " << _time << " cycles" << endl;
                 clear_last = true;
                 _sim_state = running;
+
+                cout << "Finished warming up, reconfigure the network" << endl;
+                _net[0]->reconfigure();
             }
         }
         else if (_sim_state == running)
