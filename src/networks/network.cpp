@@ -291,18 +291,10 @@ void Network::DumpNodeMap( ostream & os, string const & prefix ) const
 }
 
 // added for reconfigurability
-void Network::reconfigure() {
+void Network::compute_costs() {
 
-  // create vector for reconfig info
-  vector<reconfig_info> costs;
-
-  // clear the current reconfigurable channels if necessary
-  if (!reconfig_channels.empty()) {
-    for (FlitChannel* f : reconfig_channels) {
-      f->get_reconfig_channel()->set_rc_in_use(false);
-    }
-    reconfig_channels.clear();
-  }
+  // clear current costs
+  costs.clear();
 
   // iterate over all default channels and calculate their costs
   int num_default_channels = _channels / 2;
@@ -339,9 +331,17 @@ void Network::reconfigure() {
 
   // sort the cost info vector from highest to lowest cost
   std::sort(costs.begin(), costs.end(), [](const reconfig_info& a, const reconfig_info& b) {return a.cost > b.cost;});
+}
 
-  // printf("\nCosts has size: %d", costs.size());
-  // printf("\nLoop Iterations: %d", num_reconfig_channels);
+void Network::reconfigure() {
+
+  // clear the current reconfigurable channels if necessary
+  if (!reconfig_channels.empty()) {
+    for (FlitChannel* f : reconfig_channels) {
+      f->get_reconfig_channel()->set_rc_in_use(false);
+    }
+    reconfig_channels.clear();
+  }
 
   // re-populate network reconfig channel vector
   for (int i = 0; i < num_reconfig_channels; i++) {
@@ -349,6 +349,10 @@ void Network::reconfigure() {
     reconfig_channels.at(i)->get_reconfig_channel()->set_rc_in_use(true);
     printf("\nRC Channel %d is placed between router %d and %d. Cost = %d", i, reconfig_channels.at(i)->GetSource()->GetID(), reconfig_channels.at(i)->GetSink()->GetID(), costs.at(i).cost);
   } 
+}
 
-printf("\nThere are %d reconfig channels\n\n", reconfig_channels.size());
+void Network::evaluate_and_reconfigure() {
+  Network::compute_costs();
+  Network::reconfigure();
+  printf("\nThere are %d reconfig channels\n\n", reconfig_channels.size());
 }
