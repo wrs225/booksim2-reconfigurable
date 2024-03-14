@@ -56,6 +56,7 @@ Network::Network( const Configuration &config, const string & name ) :
   _nodes    = -1; 
   _channels = -1;
   _classes  = config.GetInt("classes");
+  num_reconfig_channels = config.GetInt("num_rc_channels");
 }
 
 Network::~Network( )

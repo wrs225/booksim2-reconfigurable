@@ -278,9 +278,6 @@ void KNCube::_BuildNet(const Configuration &config)
     }
   }
 
-  // added for reconfigurability
-  set_num_reconfig_channels(_channels / 2);
-
   printf("\nThere are %d channels", this->NumChannels());
   printf("\nThere should be %d reconfig channels\n\n", this->get_num_reconfig_channels());
 

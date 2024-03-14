@@ -314,6 +314,7 @@ BookSimConfig::BookSimConfig()
   //==================Reconfigurability======================
   _int_map["reconfig"] = 0;
   AddStrField("reconfig", ""); // workaround to allow for vector specification
+  _int_map["num_rc_channels"] = 0;
 
   // fat_tree_bw_div
   _int_map["fat_tree_bw_div"] = 1;
