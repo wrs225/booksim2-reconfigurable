@@ -37,8 +37,10 @@
 #include "flitchannel.hpp"
 #include "channel.hpp"
 #include "config_utils.hpp"
+#include "network.hpp"
 
 typedef Channel<Credit> CreditChannel;
+class Network;
 
 class Router : public TimedModule {
 
@@ -89,6 +91,9 @@ protected:
 #endif
 
   virtual void _InternalStep() = 0;
+
+  // added for reconfigurability
+  Network* gNetPointer;
 
 public:
   Router( const Configuration& config,
@@ -197,6 +202,10 @@ public:
 
   inline int NumInputs() const {return _inputs;}
   inline int NumOutputs() const {return _outputs;}
+
+  // added for reconfigurability
+  inline void set_gNetPointer(Network* net) {gNetPointer = net;}
+  Network* get_gNetPointer() const {return gNetPointer;}
 };
 
 #endif
