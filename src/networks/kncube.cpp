@@ -110,10 +110,12 @@ void KNCube::_BuildNet(const Configuration &config)
     {
       _routers[node] = Router::NewRouter(config, this, router_name.str(),
                                          node, 2 * _n + 1, 2 * _n + 1);
+      _routers[node]->set_gNetPointer(this);
     }
     else
     {
       _routers[node] = Router::NewRouter(config, this, router_name.str(), node, 2 * 2 * _n + 1, 2 * 2 * _n + 1);
+      _routers[node]->set_gNetPointer(this);
     }
     _timed_modules.push_back(_routers[node]);
 
