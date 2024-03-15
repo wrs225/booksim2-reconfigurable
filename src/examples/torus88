@@ -37,4 +37,4 @@ routing_function = dim_order;
 num_vcs = 2;
 // Traffic
 traffic = uniform;
-injection_rate = 0.15;
+injection_rate = 0.5;
