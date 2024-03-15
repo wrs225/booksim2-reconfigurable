@@ -39,6 +39,7 @@
 #include <map>
 #include <cstdlib>
 #include <cassert>
+#include <random>
 
 #include "booksim.hpp"
 #include "routefunc.hpp"
@@ -57,6 +58,10 @@ map<string, tRoutingFunction> gRoutingFunctionMap;
 int gNumVCs;
 
 int fatTreeBwDiv;
+
+std::random_device rd;
+std::default_random_engine engine(rd());
+std::uniform_real_distribution<float> distribution(0.0, 1.0);
 
 /* Add more functions here
  *
@@ -698,13 +703,15 @@ int dor_next_mesh(int cur, int dest, bool descending)
 
 //=============================================================
 
-void dor_next_torus_reconfig_all(int cur, int dest, int in_port,
-                                 int *out_port, int *partition,
+void dor_next_torus_reconfig_all(const Router* r, int cur, int dest, 
+                                 int in_port, int *out_port, int *partition,
                                  bool balance = false)
 {
   int dim_left;
   int dir;
   int dist2;
+
+  vector<FlitChannel*> rc_channels = r->get_gNetPointer()->get_reconfig_channels();
 
   for (dim_left = 0; dim_left < gN; ++dim_left)
   {
@@ -732,13 +739,37 @@ void dor_next_torus_reconfig_all(int cur, int dest, int in_port,
       {
         int channel_sel = (2 * gN + 1) * RandomInt(1);
 
-        *out_port = 2 * dim_left + channel_sel; // Right
+        *out_port = 2 * dim_left; // Right
+
+        // if (distribution(engine) < 0.0) *out_port += channel_sel;
+
+        // use recongif channel randomly if available
+        for (FlitChannel* flitChan : rc_channels) {
+          if ((r->GetID() == flitChan->GetSource()->GetID()) && (*out_port == flitChan->get_reconfig_channel()->GetSourcePort())) {
+                *out_port += channel_sel;
+                // printf("\n\nReconfig Channel Used\n\n");
+                break;
+          }
+        }
+
         dir = 0;
       }
       else
       {
         int channel_sel = (2 * gN + 1) * RandomInt(1);
-        *out_port = 2 * dim_left + 1 + channel_sel; // Left
+        *out_port = 2 * dim_left + 1; // Left
+
+        // if (distribution(engine) < 0.0) *out_port += channel_sel;
+
+        // use recongif channel randomly if available
+        for (FlitChannel* flitChan : rc_channels) {
+          if ((r->GetID() == flitChan->GetSource()->GetID()) && (*out_port == flitChan->get_reconfig_channel()->GetSourcePort())) {
+                *out_port += channel_sel;
+                // printf("\n\nReconfig Channel Used\n\n");
+                break;
+          }
+        }
+
         dir = 1;
       }
 
@@ -786,7 +817,19 @@ void dor_next_torus_reconfig_all(int cur, int dest, int in_port,
     {
       // Inverting the least significant bit keeps
       // the packet moving in the same direction
-      *out_port = (in_port ^ 1) + ((2 * gN + 1) * RandomInt(1));
+      int channel_sel = ((2 * gN + 1) * RandomInt(1));
+      *out_port = (in_port ^ 1);
+
+      // if (distribution(engine) < 0.0) *out_port += channel_sel;
+
+      // use recongif channel randomly if available
+      for (FlitChannel* flitChan : rc_channels) {
+        if ((r->GetID() == flitChan->GetSource()->GetID()) && (*out_port == flitChan->get_reconfig_channel()->GetSourcePort())) {
+              *out_port += channel_sel;
+              // printf("\n\nReconfig Channel Used\n\n");
+              break;
+        }
+      }
     }
   }
   else
@@ -2067,7 +2110,7 @@ void dim_order_reconfig_all_torus(const Router *r, const Flit *f, int in_channel
     int cur = r->GetID();
     int dest = f->dest;
 
-    dor_next_torus_reconfig_all(cur, dest, in_channel,
+    dor_next_torus_reconfig_all(r, cur, dest, in_channel,
                                 &out_port, &f->ph, false);
 
     // at the destination router, we don't need to separate VCs by ring partition

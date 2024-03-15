@@ -56,6 +56,7 @@ Network::Network( const Configuration &config, const string & name ) :
   _nodes    = -1; 
   _channels = -1;
   _classes  = config.GetInt("classes");
+  num_reconfig_channels = config.GetInt("num_rc_channels");
 }
 
 Network::~Network( )
@@ -290,18 +291,10 @@ void Network::DumpNodeMap( ostream & os, string const & prefix ) const
 }
 
 // added for reconfigurability
-void Network::reconfigure() {
+void Network::compute_costs() {
 
-  // create vector for reconfig info
-  vector<reconfig_info> costs;
-
-  // clear the current reconfigurable channels if necessary
-  if (!reconfig_channels.empty()) {
-    for (FlitChannel* f : reconfig_channels) {
-      f->get_reconfig_channel()->set_rc_in_use(false);
-    }
-    reconfig_channels.clear();
-  }
+  // clear current costs
+  costs.clear();
 
   // iterate over all default channels and calculate their costs
   int num_default_channels = _channels / 2;
@@ -311,12 +304,14 @@ void Network::reconfigure() {
     FlitChannel* chan = _chan[i];
     FlitChannel* rc_chan = chan->get_reconfig_channel();
 
+    // get source and destination routers for the current channel
     const Router* src = chan->GetSource();
     int srcPort = chan->GetSourcePort();
 
     const Router* dst = chan->GetSink();
     int dstPort = chan->GetSinkPort();
 
+    // compute cost
     int cost = src->GetUsedCredit(srcPort) + dst->GetBufferOccupancy(dstPort);
 
     // if reconfig channel is active, account for its trafic in the cost
@@ -338,10 +333,28 @@ void Network::reconfigure() {
 
   // sort the cost info vector from highest to lowest cost
   std::sort(costs.begin(), costs.end(), [](const reconfig_info& a, const reconfig_info& b) {return a.cost > b.cost;});
+}
+
+void Network::reconfigure() {
+
+  // clear the current reconfigurable channels if necessary
+  if (!reconfig_channels.empty()) {
+    for (FlitChannel* f : reconfig_channels) {
+      f->get_reconfig_channel()->set_rc_in_use(false);
+    }
+    reconfig_channels.clear();
+  }
 
   // re-populate network reconfig channel vector
   for (int i = 0; i < num_reconfig_channels; i++) {
     reconfig_channels.push_back(costs.at(i).fc);
     reconfig_channels.at(i)->get_reconfig_channel()->set_rc_in_use(true);
+    printf("RC Channel %d is placed between router %d and %d. Cost = %d\n", i, reconfig_channels.at(i)->GetSource()->GetID(), reconfig_channels.at(i)->GetSink()->GetID(), costs.at(i).cost);
   } 
+}
+
+void Network::evaluate_and_reconfigure() {
+  Network::compute_costs();
+  Network::reconfigure();
+  printf("\nThere are %d reconfig channels\n\n", reconfig_channels.size());
 }

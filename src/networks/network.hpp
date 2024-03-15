@@ -45,7 +45,6 @@
 
 typedef Channel<Credit> CreditChannel;
 
-
 class Network : public TimedModule {
 protected:
 
@@ -83,6 +82,7 @@ protected:
   int num_reconfig_channels;
   vector<FlitChannel *> reconfig_channels;
   
+  vector<reconfig_info> costs;
 
 public:
   Network( const Configuration &config, const string & name );
@@ -127,9 +127,14 @@ public:
   int NumRouters() const {return _size;}
 
   // added for reconfigurability oroject
+  void compute_costs();
   void reconfigure();
+  void evaluate_and_reconfigure();
+
   inline int get_num_reconfig_channels() {return num_reconfig_channels;}
   inline void set_num_reconfig_channels(int N) {num_reconfig_channels = N;}
+
+  inline vector<FlitChannel*> get_reconfig_channels() {return reconfig_channels;}
 };
 
 #endif 

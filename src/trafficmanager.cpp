@@ -1804,8 +1804,8 @@ bool TrafficManager::_SingleSim()
                 clear_last = true;
                 _sim_state = running;
 
-                cout << "Finished warming up, reconfigure the network" << endl;
-                _net[0]->reconfigure();
+                printf("\nFinished warming up, reconfigure the network");
+                _net[0]->evaluate_and_reconfigure();
             }
         }
         else if (_sim_state == running)

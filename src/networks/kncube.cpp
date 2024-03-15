@@ -278,11 +278,11 @@ void KNCube::_BuildNet(const Configuration &config)
     }
   }
 
-  // added for reconfigurability
-  set_num_reconfig_channels(_channels / 4);
+  printf("\nThere are %d channels", this->NumChannels());
+  printf("\nThere should be %d reconfig channels\n\n", this->get_num_reconfig_channels());
 
-  cout << "HEREHEREHERE" << endl;
-  this->DumpChannelMap(cout, "");
+  // cout << "HEREHEREHERE" << endl;
+  // this->DumpChannelMap(cout, "");
 }
 
 int KNCube::_LeftChannel(int node, int dim)

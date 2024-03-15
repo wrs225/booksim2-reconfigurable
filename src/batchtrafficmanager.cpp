@@ -114,6 +114,12 @@ bool BatchTrafficManager::_SingleSim( )
 {
   int batch_index = 0;
   while(batch_index < _batch_count) {
+
+    // reconfigure at halfway point
+    if (batch_index == (_batch_count / 2)) {
+      printf("\nHalf of the batches sent, reconfigure the network\n");
+      _net[0]->reconfigure();
+    }
     _packet_seq_no.assign(_nodes, 0);
     _last_id = -1;
     _last_pid = -1;
@@ -125,19 +131,26 @@ bool BatchTrafficManager::_SingleSim( )
       _Step();
       batch_complete = true;
       for(int i = 0; i < _nodes; ++i) {
-	if(_packet_seq_no[i] < _batch_size) {
-	  batch_complete = false;
-	  break;
-	}
+        if(_packet_seq_no[i] < _batch_size) {
+          batch_complete = false;
+          break;
+        }
       }
       if(_sent_packets_out) {
-	*_sent_packets_out << _packet_seq_no << endl;
+	      *_sent_packets_out << _packet_seq_no << endl;
       }
     } while(!batch_complete);
     cout << "Batch injected. Time used is " << _time - start_time << " cycles." << endl;
 
     int sent_time = _time;
     cout << "Waiting for batch to complete..." << endl;
+
+    // added for reconfigurability
+    // compute the cost of each channel in the network after 1st batch is injected
+    if (batch_index == 0) {
+      _net[0]->compute_costs();
+      printf("\nComputing costs for current traffic pattern\n");
+    }
 
     int empty_steps = 0;
     
@@ -152,13 +165,13 @@ bool BatchTrafficManager::_SingleSim( )
       ++empty_steps;
       
       if ( empty_steps % 1000 == 0 ) {
-	_DisplayRemaining( ); 
-	cout << ".";
+        _DisplayRemaining( ); 
+        cout << ".";
       }
       
       packets_left = false;
       for(int c = 0; c < _classes; ++c) {
-	packets_left |= !_total_in_flight_flits[c].empty();
+	      packets_left |= !_total_in_flight_flits[c].empty();
       }
     }
     cout << endl;
