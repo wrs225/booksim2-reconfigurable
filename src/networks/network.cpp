@@ -304,12 +304,14 @@ void Network::compute_costs() {
     FlitChannel* chan = _chan[i];
     FlitChannel* rc_chan = chan->get_reconfig_channel();
 
+    // get source and destination routers for the current channel
     const Router* src = chan->GetSource();
     int srcPort = chan->GetSourcePort();
 
     const Router* dst = chan->GetSink();
     int dstPort = chan->GetSinkPort();
 
+    // compute cost
     int cost = src->GetUsedCredit(srcPort) + dst->GetBufferOccupancy(dstPort);
 
     // if reconfig channel is active, account for its trafic in the cost
@@ -347,7 +349,7 @@ void Network::reconfigure() {
   for (int i = 0; i < num_reconfig_channels; i++) {
     reconfig_channels.push_back(costs.at(i).fc);
     reconfig_channels.at(i)->get_reconfig_channel()->set_rc_in_use(true);
-    printf("\nRC Channel %d is placed between router %d and %d. Cost = %d", i, reconfig_channels.at(i)->GetSource()->GetID(), reconfig_channels.at(i)->GetSink()->GetID(), costs.at(i).cost);
+    printf("RC Channel %d is placed between router %d and %d. Cost = %d\n", i, reconfig_channels.at(i)->GetSource()->GetID(), reconfig_channels.at(i)->GetSink()->GetID(), costs.at(i).cost);
   } 
 }
 
